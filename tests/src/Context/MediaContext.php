@@ -113,4 +113,46 @@ class MediaContext implements Context {
     }
   }
 
+
+  /**
+   * Enable the features.
+   *
+   * @param array $arg1
+   *   Array of feature to enable.
+   *
+   * @Given The feature :arg1 is enabled
+   */
+  public function theFeatureIsEnabled(array $arg1) {
+    @module_enable([$arg1]);
+    cache_clear_all();
+  }
+  /**
+   * Add a field group in the content type view and assign fields as children.
+   *
+   * @param string $arg1
+   *   The text in the tab to click.
+   *
+   * @When I click the :arg1 tab
+   */
+  public function iClickTheTab($arg1) {
+    $element = $this->mink->getSession()->getPage()->findById('media-tabs-wrapper');
+    $t = $element->findLink($arg1);
+    if (empty($t)) {
+      throw new \Exception(sprintf('No link element found for the text (%s)', $arg1));
+    }
+
+    $element->click();
+  }
+  /**
+   * Description.
+   *
+   * @Then I fill :arg1 with :arg2
+   */
+  public function iFillWith($arg1, $arg2) {
+      $this->mink->getSession()->wait(5000);
+      $element = $this->mink->getSession()->getPage();
+      $element->fillField($arg1, $arg2);
+      throw new PendingException();
+  }
+
 }
