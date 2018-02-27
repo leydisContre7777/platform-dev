@@ -114,19 +114,6 @@ class MediaContext implements Context {
   }
 
   /**
-   * Enable a feature.
-   *
-   * @param string $arg1
-   *   Name of feature to enable.
-   *
-   * @Given The feature :arg1 is enabled
-   */
-  public function theFeatureIsEnabled(string $arg1) {
-    @module_enable([$arg1]);
-    cache_clear_all();
-  }
-
-  /**
    * Add a field group in the content type view and assign fields as children.
    *
    * @param string $arg1
