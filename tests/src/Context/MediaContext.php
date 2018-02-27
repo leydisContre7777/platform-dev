@@ -137,13 +137,13 @@ class MediaContext implements Context {
   }
 
   /**
-  * Submit the form with id.
-  *
-  * @param string $arg1
-  *   Id of the form to submit.
-  *
-  * @Then I submit :arg1 id form
-  */
+   * Submit the form with id.
+   *
+   * @param string $arg1
+   *   Id of the form to submit.
+   *
+   * @Then I submit :arg1 id form
+   */
   public function iSubmitIdForm($arg1) {
     $element = $this->mink->getSession()->getPage()->findById('media-internet-add-upload');
     if (empty($element)) {
@@ -153,15 +153,15 @@ class MediaContext implements Context {
   }
 
   /**
-  * Check the text of a field.
-  *
-  * @param string $arg1
-  *   Id of the field to check.
-  * @param string $arg2
-  *   Text to find on the field.
-  *
-  * @Then the field :arg1 is filled with :arg2
-  */
+   * Check the text of a field.
+   *
+   * @param string $arg1
+   *   Id of the field to check.
+   * @param string $arg2
+   *   Text to find on the field.
+   *
+   * @Then the field :arg1 is filled with :arg2
+   */
   public function theFieldIsFilledWith($arg1, $arg2) {
     $page = $this->mink->getSession()->getPage()->findField($arg1);
     if (empty($page)) {
@@ -171,15 +171,5 @@ class MediaContext implements Context {
       throw new \Exception(sprintf('No match found for the text (%s)', $arg2));
     }
   }
-
-  /**
-   * @Then I should see the video with a banner :arg1
-   */
-  public function iShouldSeeTheVideoWithABanner($arg1) {
-    $page = $this->mink->getSession()->getPage();
-    file_put_contents('/home/enrique/sites/platform-dev/log.log', print_R($page, true));
-    throw new PendingException();
-  }
-
 
 }
