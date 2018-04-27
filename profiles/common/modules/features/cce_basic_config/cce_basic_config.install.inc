@@ -866,3 +866,32 @@ function _cce_basic_config_text_formats() {
   variable_set('i18n_string_allowed_formats', $full_html);
   variable_set('filter_fallback_format', 'plain_text');
 }
+
+/**
+ * Enable the module Registry On Steroids.
+ *
+ * Enabling ROS must be done in two parts.
+ * This function is not used yet and is left in the code on purpose for
+ * future use.
+ */
+function _cce_basic_config_enable_registryonsteroids() {
+  // We are not using Xautoload but Registry Autoload.
+  // In that case, we have to enable Alternatives first
+  // and must flush the cache.
+  // Then we'll be able to enable registryonsteroids.
+  module_enable(
+    array(
+      'registry_autoload',
+      'alternatives',
+    )
+  );
+
+  drupal_flush_all_caches();
+
+  module_enable(
+    array(
+      'registryonsteroids',
+      'registryonsteroids_alter',
+    )
+  );
+}
