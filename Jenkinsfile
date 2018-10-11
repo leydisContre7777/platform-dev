@@ -9,7 +9,8 @@ try {
             stage('Check') {
                 deleteDir()
                 checkout scm
-                sh 'COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest'
+                sh 'composer clear-cache'
+                sh 'composer install --no-suggest'
                 sh './bin/phing setup-php-codesniffer'
                 sh './bin/phpcs --report=full --report=source --report=summary -s'
             }
@@ -115,7 +116,8 @@ void executeStages(String label) {
         stage('Build & Install ' + label) {
             deleteDir()
             checkout scm
-            sh 'COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest'
+            sh 'composer clear-cache'
+            sh 'composer install --no-suggest'
             withCredentials([
                 [$class: 'UsernamePasswordMultiBinding', credentialsId: 'mysql', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'],
                 [$class: 'UsernamePasswordMultiBinding', credentialsId: 'flickr', usernameVariable: 'FLICKR_KEY', passwordVariable: 'FLICKR_SECRET']
