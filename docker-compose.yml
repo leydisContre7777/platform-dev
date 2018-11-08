@@ -1,0 +1,42 @@
+version: '2'
+services:
+  web:
+    # image: fpfis/httpd-php-dev:7.1
+    image: fpfis/php56-dev
+    working_dir: ${PWD}
+    volumes:
+      - ${PWD}:${PWD}
+    environment:
+      XDEBUG_CONFIG: "idekey=cloud9ide remote_connect_back=0 remote_host=${DOCKER_HOST_IP} remote_enable=1"
+      PHP_IDE_CONFIG: "serverName=Test"
+      DOCUMENT_ROOT: "${PWD}/build"
+      VIRTUAL_HOST: release_25.test
+      VIRTUAL_NETWORK: nginx-proxy
+      PORT: 80
+    depends_on:
+      - mysql
+    ports:
+      - '80'
+    networks:
+      - default
+      - proxy
+  mysql:
+    image: percona/percona-server:5.6
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: 'secret'
+      MYSQL_DATABASE: 'drupal'
+      MYSQL_USER: 'dbuser'
+      MYSQL_PASSWORD: 'dbpass'
+    ports:
+      - '3306'
+  solr:
+    image: fpfis/solr5
+  selenium:
+    image: selenium/standalone-chrome
+networks:
+  default:
+    driver: bridge
+  proxy:
+    external:
+      name: proxy-frontend
