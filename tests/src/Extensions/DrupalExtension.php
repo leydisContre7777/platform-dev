@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\nexteuropa\DrupalExtension\ServiceContainer.
- */
-
 namespace Drupal\nexteuropa\Extensions;
 
 use Drupal\DrupalExtension\ServiceContainer\DrupalExtension as OriginalDrupalExtension;
@@ -30,6 +25,7 @@ class DrupalExtension extends OriginalDrupalExtension {
       children()->
         arrayNode('selectors')->
           children()->
+            scalarNode('node_tag')->end()->
             scalarNode('message_selector')->end()->
             scalarNode('error_message_selector')->end()->
             scalarNode('success_message_selector')->end()->
@@ -37,7 +33,9 @@ class DrupalExtension extends OriginalDrupalExtension {
             scalarNode('front_message_selector')->end()->
             scalarNode('front_error_message_selector')->end()->
             scalarNode('front_success_message_selector')->end()->
-            scalarNode('front_warning_message_selector')->end();
+            scalarNode('front_warning_message_selector')->end()->
+            scalarNode('logged_in_selector')->end()->
+            scalarNode('login_form_selector')->end();
     // @codingStandardsIgnoreEnd
   }
 
