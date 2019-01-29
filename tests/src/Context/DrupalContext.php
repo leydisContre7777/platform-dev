@@ -1,15 +1,11 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\nexteuropa\Context\DrupalContext.
- */
-
 namespace Drupal\nexteuropa\Context;
 
 use Behat\Behat\Hook\Scope\BeforeScenarioScope;
 use Drupal\DrupalExtension\Context\DrupalContext as DrupalExtensionDrupalContext;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Mink\Element\Element;
 use function bovigo\assert\assert;
 use function bovigo\assert\predicate\hasKey;
 
@@ -37,9 +33,9 @@ class DrupalContext extends DrupalExtensionDrupalContext {
   /**
    * Stores languages modified during test execution.
    *
-   * @see DrupalContext::setLanguageProperty()
-   *
    * @var array
+   *
+   * @see DrupalContext::setLanguageProperty()
    */
   protected $modifiedLanguages = [];
 
@@ -99,18 +95,6 @@ class DrupalContext extends DrupalExtensionDrupalContext {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function loggedIn() {
-    $session = $this->getSession();
-    $session->visit($this->locatePath('/'));
-
-    // Check if the 'logged-in' class is present on the page.
-    $element = $session->getPage();
-    return $element->find('css', 'body.logged-in');
-  }
-
-  /**
    * Visit a node page given its type and title.
    *
    * @param string $type
@@ -133,6 +117,30 @@ class DrupalContext extends DrupalExtensionDrupalContext {
     $path = url($path, ['base_url' => '', 'absolute' => TRUE]);
     // Visit newly created node page.
     $this->visitPath($path);
+  }
+
+  /**
+   * Check a radio button selected by its id.
+   *
+   * @param string $id
+   *   The id of the element.
+   *
+   * @see \Drupal\DrupalExtension\Context\MinkContext::assertSelectRadioById
+   *
+   * @When I select the radio button with the id :id
+   */
+  public function assertSelectRadioById($id) {
+    $element = $this->getSession()->getPage();
+    $radiobutton = $element->findById($id);
+    if ($radiobutton === NULL) {
+      throw new \Exception(sprintf(
+        'The radio button with "%s" was not found on the page %s',
+        $id,
+        $this->getSession()->getCurrentUrl()
+      ));
+    }
+    $value = $radiobutton->getAttribute('value');
+    $radiobutton->selectOption($value, FALSE);
   }
 
   /**
@@ -192,7 +200,7 @@ class DrupalContext extends DrupalExtensionDrupalContext {
    *
    * @param string $text_format
    *   The filter format name or its machine name.
-   * @param TableNode $table
+   * @param \Behat\Gherkin\Node\TableNode $table
    *   List of available content property.
    *
    * @return array
@@ -268,6 +276,163 @@ class DrupalContext extends DrupalExtensionDrupalContext {
       $group->children[] = $field_name;
       field_group_group_save($group);
     }
+  }
+
+  /**
+   * Assert a text does not appear in a certain tag with a certain attribute.
+   *
+   * @Then I should not see (the text ):text in the :tag element with the :attribute attribute set to :value
+   */
+  public function assertTextNotInElement($text, $tag, $attribute, $value) {
+    $elements = $this->getElementsByAttribute($this->getSession()->getPage(), $tag, $attribute, $value);
+
+    $text_found = FALSE;
+    foreach ($elements as $element) {
+      if (strpos($element->getText(), $text) !== FALSE) {
+        $text_found = TRUE;
+        break;
+      }
+    }
+
+    if ($text_found) {
+      throw new \Exception(sprintf('The text "%s" was found in the "%s" element with the "%s" attribute set to "%s" on the page %s', $text, $tag, $attribute, $value, $this->getSession()->getCurrentUrl()));
+    }
+  }
+
+  /**
+   * Assert a text does appear in a certain tag with a certain attribute.
+   *
+   * @Then I should see (the text ):text in the :tag element with the :attribute attribute set to :value
+   */
+  public function assertTextInElement($text, $tag, $attribute, $value) {
+    $elements = $this->getElementsByAttribute($this->getSession()->getPage(), $tag, $attribute, $value);
+
+    $text_found = FALSE;
+    foreach ($elements as $element) {
+      if (strpos($element->getText(), $text) !== FALSE) {
+        $text_found = TRUE;
+        break;
+      }
+    }
+
+    if (!$text_found) {
+      throw new \Exception(sprintf('The text "%s" was not found in the "%s" element with the "%s" attribute set to "%s" on the page %s', $text, $tag, $attribute, $value, $this->getSession()->getCurrentUrl()));
+    }
+  }
+
+  /**
+   * Retrieve a table row containing specified text from a given element.
+   *
+   * @param \Behat\Mink\Element\Element $source_element
+   *   The element where to search for the tag.
+   * @param string $tag
+   *   The tag to search for.
+   * @param string $attribute
+   *   The name of the attribute.
+   * @param string $value
+   *   The value of the attribute.
+   *
+   * @return array
+   *   An array of elements filtered by an attribute value.
+   *
+   * @throws \Exception
+   */
+  public function getElementsByAttribute(Element $source_element, $tag, $attribute, $value) {
+    $elements = $source_element->findAll('css', $tag);
+    $found_elements = array();
+    if (empty($elements)) {
+      throw new \Exception(sprintf('The element "%s" was not found on the page %s', $tag, $this->getSession()->getCurrentUrl()));
+    }
+    foreach ($elements as $element) {
+      $attr = $element->getAttribute($attribute);
+      if ($attr === $value) {
+        $found_elements[] = $element;
+      }
+    }
+    if (empty($found_elements)) {
+      throw new \Exception(sprintf('No element "%s" with the attribute "%s" set to "%s" was not found on the page %s', $tag, $attribute, $value, $this->getSession()->getCurrentUrl()));
+    }
+    return $found_elements;
+  }
+
+  /**
+   * Click on a selector element.
+   *
+   * @param string $arg1
+   *   Selector css.
+   *
+   * @Then I click on element :arg1
+   */
+  public function iClickOnElement($arg1) {
+    $session = $this->getSession();
+    $element = $session->getPage()->find("css", $arg1);
+    if (NULL === $element) {
+      throw new \Exception(sprintf('Could not find: "%s"', $arg1));
+    }
+    $element->click();
+  }
+
+  /**
+   * Click on a selector element option.
+   *
+   * @param string $arg1
+   *   Selector css.
+   * @param string $arg2
+   *   Option text.
+   *
+   * @Then I click on option :arg1 from element :arg2
+   */
+  public function iClickOnOptionFromElement($arg1, $arg2) {
+    $session = $this->getSession();
+    $element = $session->getPage()->find("css", $arg2);
+    if (NULL === $element) {
+      throw new \Exception(sprintf('Could not find selector: "%s"', $arg2));
+    }
+    $element = $element->find("xpath", 'option[text()="' . $arg1 . '"]');
+    if (NULL === $element) {
+      throw new \Exception(sprintf('Could not find text: "%s"', $arg1));
+    }
+    $element->click();
+  }
+
+  /**
+   * Creates content of the given type and a moderation state.
+   *
+   * @param string $type
+   *   The created content type.
+   * @param string $state
+   *   The moderation state of the created content.
+   * @param \Behat\Gherkin\Node\TableNode $fields
+   *   The values set for the content fields.
+   *   The table contains 2 column: one for the field name and one
+   *   for the field value.
+   *
+   * @Given I am viewing a/an :type( content) with :state moderation state:
+   */
+  public function assertViewingNodeWithModerationState($type, $state, TableNode $fields) {
+    $node = (object) array(
+      'type' => $type,
+      'workbench_moderation_state_new' => $state,
+    );
+    foreach ($fields->getRowsHash() as $field => $value) {
+      $node->{$field} = $value;
+    }
+
+    $saved = $this->nodeCreate($node);
+
+    // Set internal browser on the node.
+    $this->getSession()->visit($this->locatePath('/node/' . $saved->nid));
+  }
+
+  /**
+   * Get last created node nid.
+   *
+   * @return int
+   *   The nid of the node.
+   */
+  public function getLastNode() {
+    $this->rememberCurrentLastNode();
+    return $this->maxNodeId;
   }
 
 }
